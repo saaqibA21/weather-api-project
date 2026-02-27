@@ -8,7 +8,4 @@ venv/
 ENV/
 .streamlit/
 .DS_Store
-*.pkl
-*.pth
-*.h5
-*.joblib
+

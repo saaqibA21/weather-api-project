@@ -29,7 +29,23 @@ load_dotenv()
 # -------------------------------------------------------------------
 # CONSTANTS
 # -------------------------------------------------------------------
-OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
+# Robust API Key Loading
+def load_api_key():
+    key = os.getenv("OPENWEATHER_API_KEY")
+    if not key:
+        try:
+            key = st.secrets.get("OPENWEATHER_API_KEY")
+        except:
+            key = None
+    
+    if key:
+        # Clean the key: remove whitespace and any accidental quotes
+        return key.strip().replace('"', '').replace("'", "")
+    return None
+
+OPENWEATHER_API_KEY = load_api_key()
+
+
 FEATURE_COLUMNS = [
     "temp_max", "temp_min", "temp_avg", "rain_mm", "wind_kmh", 
     "humidity", "pressure", "cloud_cover", "dew_point", 
@@ -55,16 +71,34 @@ def idx_to_label(idx: int) -> str:
 # WEATHER API
 # -------------------------------------------------------------------
 def get_live_weather(city: str):
+    if not OPENWEATHER_API_KEY:
+        raise ValueError(
+            "OpenWeather API Key is missing. "
+            "If hosting on Streamlit Cloud, add 'OPENWEATHER_API_KEY' to your App Secrets. "
+            "If running locally, ensure it is in your .env file."
+        )
+    
     url = (
         f"https://api.openweathermap.org/data/2.5/weather"
         f"?q={city}&appid={OPENWEATHER_API_KEY}&units=metric"
     )
 
+
     r = requests.get(url)
     data = r.json()
 
     if r.status_code != 200:
-        raise ValueError(data.get("message", "Weather API error"))
+        msg = data.get("message", "Weather API error")
+        if r.status_code == 401:
+            key_preview = f"{OPENWEATHER_API_KEY[:4]}...{OPENWEATHER_API_KEY[-2:]}" if OPENWEATHER_API_KEY else "MISSING"
+            raise ValueError(
+                f"Invalid API Key (Error 401). Your key '{key_preview}' "
+                "was rejected by OpenWeather. Please ensure you copied it correctly into "
+                "Streamlit Secrets without any extra characters or quotes."
+            )
+
+        raise ValueError(msg)
+
 
     temp_max = float(data["main"]["temp_max"])
     temp_min = float(data["main"]["temp_min"])
