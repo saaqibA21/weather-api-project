@@ -15,7 +15,7 @@ from styles import apply_custom_styles, render_result_card
 # CONFIG & STYLES
 # -------------------------------------------------------------------
 st.set_page_config(
-    page_title="Epidemic AI | Disease Outbreak Predictor",
+    page_title="Epidemic AI - By Curelith| Disease Outbreak Predictor",
     page_icon="🦠",
     layout="wide",
     initial_sidebar_state="expanded"
